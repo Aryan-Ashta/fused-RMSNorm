@@ -26,7 +26,7 @@ def profile_naive_baseline():
         out = model(x)
         torch.cuda.synchronize()
 
-    print(prof.key_averages().table(sort_by="cuda_time+total", row_limit=15))
+    print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=15))
 
 if __name__ == "__main__":
     if not torch.cuda.is_available():
