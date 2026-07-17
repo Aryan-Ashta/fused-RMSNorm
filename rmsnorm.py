@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import triton
-from kernels import rmsnorm_fw_kernel
+from kernels import rmsnorm_fw_kernel, rmsnorm_bw_kernel
 
 class FusedRMSNormFunction(torch.autograd.Function):
     @staticmethod
