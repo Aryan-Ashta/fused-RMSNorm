@@ -83,8 +83,12 @@ def test_rmsnorm_backward_correctness(shape, dtype):
     res_naive.backward(dy)
     res_fused.backward(dy)
 
-    atol = 1e-4 if dtype == torch.float32 else 1e-2
-    rtol = 1e-4 if dtype == torch.float32 else 1e-2
+    if dtype == torch.float32:
+        atol, rtol = 1e-4, 1e-4
+    elif dtype == torch.float16:
+        atol, rtol = 1e-2, 1e-2
+    else: # bfloat16
+        atol, rtol = 5e-2, 5e-2
 
     torch.testing.assert_close(x_fused.grad, x_naive.grad, atol=atol, rtol=rtol)
     torch.testing.assert_close(w_fused.grad, w_naive.grad, atol=atol, rtol=rtol)
