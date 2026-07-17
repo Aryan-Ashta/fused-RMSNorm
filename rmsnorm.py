@@ -7,6 +7,7 @@ class FusedRMSNormFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x, weight, eps=1e-5):
         orig_shape = x.shape
+        ctx.orig_shape = orig_shape
         x_2d = x.view(-1, orig_shape[-1])
         M, N = x_2d.shape #handle input tensors
 
@@ -21,7 +22,7 @@ class FusedRMSNormFunction(torch.autograd.Function):
             x_2d.stride(0), N, eps,
         )
 
-        ctx.save_for_backward(x, weight, rstd)
+        ctx.save_for_backward(x_2d, weight, rstd)
         ctx.eps = eps
         return y.view(*orig_shape)
 
