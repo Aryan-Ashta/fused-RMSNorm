@@ -20,6 +20,9 @@ def early_config_prune(configs, named_args, **kwargs): # makes sure block size s
         triton.Config({'BLOCK_SIZE': 8192}, num_warps=16),
     ],
     key=['N_cols'],
+    prune_configs_by={
+            'early_config_prune': early_config_prune
+        }
 ) # triton autotuner for block size
 @triton.jit
 def rmsnorm_fw_kernel(
