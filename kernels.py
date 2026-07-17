@@ -55,6 +55,21 @@ def rmsnorm_fw_kernel(
     y_row_start_ptr = Y_ptr + row_idx * stride_row
     tl.store(y_row_start_ptr + col_offsets, y, mask=mask) # store back to HBM
 
+@triton.autotune(
+    configs=[
+        triton.Config({'BLOCK_SIZE': 512}, num_warps=4),
+        triton.Config({'BLOCK_SIZE': 1024}, num_warps=4),
+        triton.Config({'BLOCK_SIZE': 1024}, num_warps=8),
+        triton.Config({'BLOCK_SIZE': 2048}, num_warps=8),
+        triton.Config({'BLOCK_SIZE': 4096}, num_warps=8),
+        triton.Config({'BLOCK_SIZE': 4096}, num_warps=16),
+        triton.Config({'BLOCK_SIZE': 8192}, num_warps=16),
+    ],
+    key=['N_cols'],
+    prune_configs_by={
+        'early_config_prune': early_config_prune
+    }
+)
 @triton.jit
 def rmsnorm_bw_kernel(
     dY_ptr,         # ptr to output gradients
