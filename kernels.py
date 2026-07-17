@@ -1,5 +1,14 @@
 import triton
 import triton.language as tl
+
+def early_config_prune(configs, named_args, **kwargs): # makes sure block size selected by autotuner is valid
+    N_cols = named_args['N_cols']
+    pruned = [cfg for cfg in configs if cfg.kwargs['BLOCK_SIZE'] >= N_cols]
+    if len(pruned) == 0:
+        max_cfg = max(configs, key=lambda c: c.kwargs['BLOCK_SIZE'])
+        return [max_cfg]
+    return pruned
+
 @triton.autotune(
     configs=[
         triton.Config({'BLOCK_SIZE': 512}, num_warps=4),
