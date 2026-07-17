@@ -35,7 +35,8 @@ class FusedRMSNorm(nn.Module):
     # Fused RMS Norm
     def __init__(self, dim: int, eps: float = 1e-5):
         super().__init__()
-        self._norm = NaiveRMSNorm(dim, eps)
+        self.eps = eps
+        self.weight = nn.Parameter(torch.ones(dim))
 
         self.compiled_norm = torch.compile(self._norm)
 
