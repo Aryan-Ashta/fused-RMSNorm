@@ -3,6 +3,8 @@ import triton
 import triton.testing as tt
 import pandas as pd
 import matplotlib.pyplot as plt
+import torch._dynamo
+torch._dynamo.config.recompile_limit = 32
 
 from rmsnorm import FusedRMSNorm, NaiveRMSNorm
 
