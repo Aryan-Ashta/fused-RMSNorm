@@ -13,14 +13,12 @@ class FusedRMSNormFunction(torch.autograd.Function):
         y = torch.empty_like(x_2d) # output tensor allocation
         rstd = torch.empty((M,),dtype=torch.float32, device=x.device) # allocate tensor to save rstd
 
-        BLOCK_SIZE = triton.next_power_of_2(N) #heuristic to set BLOCK_SIZE
-
-        grid = (M,)
+        def grid(meta):
+            return (M,)
 
         rmsnorm_fw_kernel[grid](
             x_2d, y, weight, rstd,
             x_2d.stride(0), N, eps,
-            BLOCK_SIZE=BLOCK_SIZE
         )
 
         ctx.save_for_backward(x, weight, rstd)

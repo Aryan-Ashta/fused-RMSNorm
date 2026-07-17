@@ -1,6 +1,17 @@
 import triton
 import triton.language as tl
-
+@triton.autotune(
+    configs=[
+        triton.Config({'BLOCK_SIZE': 512}, num_warps=4),
+        triton.Config({'BLOCK_SIZE': 1024}, num_warps=4),
+        triton.Config({'BLOCK_SIZE': 1024}, num_warps=8),
+        triton.Config({'BLOCK_SIZE': 2048}, num_warps=8),
+        triton.Config({'BLOCK_SIZE': 4096}, num_warps=8),
+        triton.Config({'BLOCK_SIZE': 4096}, num_warps=16),
+        triton.Config({'BLOCK_SIZE': 8192}, num_warps=16),
+    ],
+    key=['N_cols'],
+) # triton autotuner for block size
 @triton.jit
 def rmsnorm_fw_kernel(
     X_ptr, # ptr to input
