@@ -1,6 +1,8 @@
 import torch
 import triton
 import triton.testing as tt
+import pandas as pd
+import matplotlib.pyplot as plt
 
 from rmsnorm import FusedRMSNorm, NaiveRMSNorm
 
@@ -74,18 +76,23 @@ def benchmark(M, N, dtype, provider, mode):
 
     return gb / (ms / 1000.0)
 
-import pandas as pd
-import matplotlib.pyplot as plt
+
 
 def plot_custom_bandwidth(csv_file, title, output_png):
     try:
         df = pd.read_csv(csv_file)
 
+        df.columns = df.columns.str.strip()
+
+        triton_col = [c for c in df.columns if 'triton' in c.lower() or 'fused' in c.lower()][0]
+        compile_col = [c for c in df.columns if 'compile' in c.lower()][0]
+        naive_col = [c for c in df.columns if 'naive' in c.lower() or 'eager' in c.lower()][0]
+
         plt.figure(figsize=(10, 6))
 
-        plt.plot(df['N'], df['triton'], label='Fused Triton', color='green', marker='o', linewidth=2)
-        plt.plot(df['N'], df['compile'], label='Torch Compile', color='orange', marker='s', linewidth=1.5)
-        plt.plot(df['N'], df['naive'], label='PyTorch Eager', color='blue', marker='x', linewidth=1.5, linestyle='--')
+        plt.plot(df['N'], df[triton_col], label='Fused Triton', color='green', marker='o', linewidth=2)
+        plt.plot(df['N'], df[compile_col], label='Torch Compile', color='orange', marker='s', linewidth=1.5)
+        plt.plot(df['N'], df[naive_col], label='PyTorch Eager', color='blue', marker='x', linewidth=1.5, linestyle='--')
 
         plt.title(title, fontsize=14, fontweight='bold', pad=15)
         plt.xlabel('Hidden Dimension Size (N)', fontsize=12)
