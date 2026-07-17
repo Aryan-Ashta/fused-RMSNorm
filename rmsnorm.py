@@ -36,8 +36,7 @@ class FusedRMSNormFunction(torch.autograd.Function):
 
         dx = torch.empty_like(x_2d)
 
-        dw_row_buf = torch.empty_like(x_2d)
-
+        dw_row_buf = torch.empty((M, N), dtype=torch.float32, device=x_2d.device)
         def grid(meta):
             return (M,)
 
@@ -47,7 +46,7 @@ class FusedRMSNormFunction(torch.autograd.Function):
             x_2d.stride(0), N
         )
 
-        dw = dw_row_buf.sum(dim=0)
+        dw = dw_row_buf.sum(dim=0).to(x_2d.dtype)
 
         return dx.view(*orig_shape), dw, None
 

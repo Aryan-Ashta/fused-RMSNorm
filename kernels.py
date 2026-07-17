@@ -88,7 +88,6 @@ def rmsnorm_bw_kernel(
     col_offsets = tl.arange(0, BLOCK_SIZE)
     mask = col_offsets < N_cols
 
-    # load from HBM into SRAM
     dy = tl.load(dY_ptr + row_offset + col_offsets, mask=mask, other=0.0).to(tl.float32)
     x = tl.load(X_ptr + row_offset + col_offsets, mask=mask, other=0.0).to(tl.float32)
     w = tl.load(W_ptr + col_offsets, mask=mask, other=0.0).to(tl.float32)
