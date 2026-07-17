@@ -25,9 +25,30 @@ class FusedRMSNormFunction(torch.autograd.Function):
         ctx.eps = eps
         return y.view(*orig_shape)
 
-        @staticmethod
-        def backward(ctx, dy):
-            raise NotImplementedError("backward pass is not implemented yet")
+    @staticmethod
+    def backward(ctx, dy):
+        x_2d, weight, rstd = ctx.saved_tensors
+        orig_shape = ctx.orig_shape
+        M, N = x_2d.shape
+
+        dy_2d = dy.reshape(-1, N) # flatten incoming  gradients
+
+        dx = torch.empty_like(x_2d)
+
+        dw_row_buf = torch.empty_like(x_2d)
+
+        def grid(meta):
+            return (M,)
+
+        # Launch Triton Backward Kernel
+        rmsnorm_bw_kernel[grid]( # type: ignore
+            dy_2d, x_2d, weight, rstd, dx, dw_row_buf,
+            x_2d.stride(0), N
+        )
+
+        dw = dw_row_buf.sum(dim=0)
+
+        return dx.view(*orig_shape), dw, None
 
 class FusedRMSNorm(nn.Module):
     # Fused RMS Norm

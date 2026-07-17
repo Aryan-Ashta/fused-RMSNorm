@@ -54,3 +54,42 @@ def rmsnorm_fw_kernel(
 
     y_row_start_ptr = Y_ptr + row_idx * stride_row
     tl.store(y_row_start_ptr + col_offsets, y, mask=mask) # store back to HBM
+
+@triton.jit
+def rmsnorm_bw_kernel(
+    dY_ptr,         # ptr to output gradients
+    X_ptr,          # ptr to input features
+    W_ptr,          # ptr to weights Gamma
+    rstd_ptr,       # ptr to saved reciprocal std dev
+    dX_ptr,         # ptr to output gradient
+    dW_row_ptr,     # temp row-wise gradient buffer
+    stride_row,     # distance between memory rows
+    N_cols,         # cols per row
+    BLOCK_SIZE: tl.constexpr,
+):
+    row_idx = tl.program_id(0)
+
+    row_offset = row_idx * stride_row
+    col_offsets = tl.arange(0, BLOCK_SIZE)
+    mask = col_offsets < N_cols
+
+    # load from HBM into SRAM
+    dy = tl.load(dY_ptr + row_offset + col_offsets, mask=mask, other=0.0).to(tl.float32)
+    x = tl.load(X_ptr + row_offset + col_offsets, mask=mask, other=0.0).to(tl.float32)
+    w = tl.load(W_ptr + col_offsets, mask=mask, other=0.0).to(tl.float32)
+    rstd = tl.load(rstd_ptr + row_idx).to(tl.float32)
+
+    x_hat = x * rstd
+
+    dw_row = dy * x_hat
+    tl.store(dW_row_ptr + row_offset + col_offsets, dw_row, mask=mask)
+
+    dy_w_x = dy * w * x
+    sum_dy_w_x = tl.sum(dy_w_x, axis=0)
+
+
+    term1 = dy * w * rstd
+    term2 = x * (rstd * rstd * rstd) * sum_dy_w_x / N_cols
+    dx = term1 - term2
+
+    tl.store(dX_ptr + row_offset + col_offsets, dx, mask=mask)
