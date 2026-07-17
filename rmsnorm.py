@@ -37,9 +37,6 @@ class FusedRMSNorm(nn.Module):
         super().__init__()
         self.eps = eps
         self.weight = nn.Parameter(torch.ones(dim))
-
-        self.compiled_norm = torch.compile(self._norm)
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return FusedRMSNormFunction.apply(x, self.weight, self.eps)
 
