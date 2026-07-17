@@ -61,7 +61,7 @@ def test_rmsnorm_correctness(shape, dtype):
 
 
 @pytest.mark.parametrize("shape", [(4, 128), (8, 512)])
-@pytest.mark.parametrize("dtype", [torch.float32, torch.float16])
+@pytest.mark.parametrize("dtype", [torch.float32, torch.float16, torch.bfloat16])
 def test_rmsnorm_backward_correctness(shape, dtype):
     if not torch.cuda.is_available():
         pytest.skip("CUDA not available")
