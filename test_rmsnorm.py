@@ -1,6 +1,6 @@
 import pytest
 import torch
-from rmsnorm import NaiveRMSNorm, FusedRMSNorm
+from rmsnorm import NaiveRMSNorm, FusedRMSNorm, FusedRMSNormFunction
 
 class NaiveRMSNormFunction(torch.autograd.Function): # new custom baseline
     @staticmethod
@@ -69,20 +69,17 @@ def test_rmsnorm_backward_correctness(shape, dtype):
     torch.manual_seed(42)
     dim = shape[-1]
 
-    # Set requires_grad=True to track gradients
     x_naive = torch.randn(shape, device='cuda', dtype=dtype, requires_grad=True)
     w_naive = torch.randn((dim,), device='cuda', dtype=dtype, requires_grad=True)
 
     x_fused = x_naive.detach().clone().requires_grad_(True)
     w_fused = w_naive.detach().clone().requires_grad_(True)
 
-    # Forward pass
     res_naive = NaiveRMSNormFunction.apply(x_naive, w_naive)
-    res_fused = FusedRMSNorm.apply(x_fused, w_fused)
+    res_fused = FusedRMSNormFunction.apply(x_fused, w_fused)
 
     dy = torch.randn_like(res_naive)
 
-    # Backward pass
     res_naive.backward(dy)
     res_fused.backward(dy)
 
