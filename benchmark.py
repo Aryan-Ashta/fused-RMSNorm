@@ -38,8 +38,7 @@ def benchmark(M, N, dtype, provider, mode):
     # 2. instantiate implementations
     naive_norm = NaiveRMSNorm(N).to('cuda', dtype=dtype)
     fused_norm = FusedRMSNorm(N).to('cuda', dtype=dtype)
-    compiled_norm = torch.compile(naive_norm)
-
+    compiled_norm = torch.compile(naive_norm, dynamic=True)
     # 3. choose target function
     if provider == 'naive':
         module = naive_norm
